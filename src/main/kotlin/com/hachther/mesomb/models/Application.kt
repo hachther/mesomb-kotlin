@@ -5,16 +5,16 @@ import org.json.simple.JSONObject
 
 
 class Application(obj: JSONObject) {
-    private var key: String? = null
-    private var logo: String? = null
-    private var balances: JSONArray? = null
-    private var countries: JSONArray? = null
-    private var description: String? = null
-    private var isLive = false
-    private var name: String? = null
-    private var security: JSONObject? = null
-    private var status: String? = null
-    private var url: String? = null
+    var key: String? = null
+    var logo: String? = null
+    var balances: JSONArray? = null
+    var countries: JSONArray? = null
+    var description: String? = null
+    var isLive = false
+    var name: String? = null
+    var security: JSONObject? = null
+    var status: String? = null
+    var url: String? = null
 
     init {
         key = obj["key"] as String?
@@ -27,38 +27,6 @@ class Application(obj: JSONObject) {
         security = obj["security"] as JSONObject?
         status = obj["status"] as String?
         url = obj["url"] as String?
-    }
-
-    fun getKey(): String? {
-        return key
-    }
-
-    fun getLogo(): String? {
-        return logo
-    }
-
-    fun getCountries(): JSONArray? {
-        return countries
-    }
-
-    fun getDescription(): String? {
-        return description
-    }
-
-    fun isLive(): Boolean {
-        return isLive
-    }
-
-    fun getName(): String? {
-        return name
-    }
-
-    fun getStatus(): String? {
-        return status
-    }
-
-    fun getUrl(): String? {
-        return url
     }
 
     fun getBalance(country: String?, service: String?): Float {
@@ -75,15 +43,6 @@ class Application(obj: JSONObject) {
         }
         return balance
     }
-
-    fun getBalance(): Float {
-        return this.getBalance(null, null)
-    }
-
-    fun getBalance(country: String?): Float {
-        return this.getBalance(country, null)
-    }
-
     fun getSecurityField(field: String?): Any? {
         return security!![field]
     }

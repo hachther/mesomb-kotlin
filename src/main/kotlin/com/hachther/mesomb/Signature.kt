@@ -1,5 +1,6 @@
 package com.hachther.mesomb
 
+import okio.ByteString.Companion.encode
 import org.json.simple.JSONObject
 import java.io.UnsupportedEncodingException
 import java.net.MalformedURLException
@@ -62,7 +63,7 @@ object Signature {
             headers = TreeMap()
         }
         headers["host"] =
-            (parse.getProtocol() + "://" + parse.getHost()).toString() + if (parse.getPort() > 0) ":" + parse.getPort() else ""
+            (parse.getProtocol() + "://" + parse.getHost()) + if (parse.getPort() > 0) ":" + parse.getPort() else ""
         headers["x-mesomb-date"] = timestamp.toString()
         headers["x-mesomb-nonce"] = nonce
 
@@ -76,7 +77,7 @@ object Signature {
             i++
         }
         val canonicalHeaders = java.lang.String.join("\n", *headersTokens)
-        val payloadHash = sha1(if (body != null) JSONObject.toJSONString(body) else "{}")
+        val payloadHash = sha1(if (body != null) JSONObject.toJSONString(body).replace("\\/", "/") else "{}")
         val signedHeaders = java.lang.String.join(";", *headersKeys)
         val path: String
         path = try {

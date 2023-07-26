@@ -14,8 +14,11 @@ object MeSomb {
     /** The base URL for the MeSomb API.  */
     var apiBase = "https://mesomb.hachther.com"
 
+    var language = "en";
+
     /** The version of the MeSomb API to use for requests.  */
     var apiVersion = "v1.1"
+    var version = "1.0.2"
 
     /** The application's information (name, version, URL)  */
     var appInfo: String? = null

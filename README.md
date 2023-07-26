@@ -81,12 +81,18 @@ import com.hachther.mesomb.exceptions.ServiceNotFoundException
 import com.hachther.mesomb.models.Application
 import com.hachther.mesomb.models.TransactionResponse
 import com.hachther.mesomb.operations.PaymentOperation
+import com.hachther.mesomb.util.RandomGenerator.nonce
 
 class Test {
     fun main() {
         val payment = PaymentOperation(this.applicationKey, this.accessKey, this.secretKey)
         try {
-            val response = payment.makeCollect(100, "MTN", "677550203", Date(), RandomGenerator.nonce())
+            val response = payment.makeCollect(mapOf(
+                "amount" to 100f,
+                "service" to "MTN",
+                "payer" to "670000000",
+                "nonce" to nonce(),
+            ))
         } catch (e: IOException) {
             throw RuntimeException(e)
         } catch (e: NoSuchAlgorithmException) {
@@ -119,12 +125,18 @@ import com.hachther.mesomb.exceptions.ServiceNotFoundException
 import com.hachther.mesomb.models.Application
 import com.hachther.mesomb.models.TransactionResponse
 import com.hachther.mesomb.operations.PaymentOperation
+import com.hachther.mesomb.util.RandomGenerator.nonce
 
 class Test {
     fun main() {
         val payment = PaymentOperation(this.applicationKey, this.accessKey, this.secretKey)
         try {
-            val response = payment.makeDeposit(100, "MTN", "677550203", Date(), RandomGenerator.nonce())
+            val response = payment.makeDeposit(mapOf(
+                "amount" to 100f,
+                "service" to "MTN",
+                "receiver" to "670000000",
+                "nonce" to nonce(),
+            ))
         } catch (e: IOException) {
             throw RuntimeException(e)
         } catch (e: NoSuchAlgorithmException) {

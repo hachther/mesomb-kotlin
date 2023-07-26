@@ -8,11 +8,9 @@ import com.hachther.mesomb.exceptions.ServerException
 import com.hachther.mesomb.exceptions.ServiceNotFoundException
 import com.hachther.mesomb.models.Application
 import com.hachther.mesomb.models.TransactionResponse
-import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
@@ -37,7 +35,7 @@ class PaymentOperation(
     }
 
     private fun buildUrl(endpoint: String): String {
-        return "${MeSomb.apiBase}/en/api/${MeSomb.apiVersion}/$endpoint"
+        return "${MeSomb.apiBase}/${MeSomb.language}/api/${MeSomb.apiVersion}/$endpoint"
     }
 
     @Throws(
@@ -114,13 +112,19 @@ class PaymentOperation(
         endpoint: String,
         date: Date,
         nonce: String = "",
-        body: Map<String, Any>? = null,
+        body: MutableMap<String, Any>? = null,
         mode: String? = null
-    ): String? {
+    ): String {
         val url = buildUrl(endpoint)
+        var trxID: String? = null
+        if (body != null && body.containsKey("trxID")) {
+            trxID = body["trxID"] as String?
+            body.remove("trxID")
+        }
         val authorization: String = if (method == "POST") {
             val headers = TreeMap<String, String>()
             headers["content-type"] = MEDIA_TYPE_JSON.toString()
+            body?.set("source", "MeSombKotlin/" + MeSomb.version)
             this.getAuthorization(method, endpoint, date, nonce, headers, body)
         } else {
             this.getAuthorization(method, endpoint, date, nonce)
@@ -136,6 +140,9 @@ class PaymentOperation(
         if (mode != null) {
             builder = builder.addHeader("X-MeSomb-OperationMode", mode)
         }
+        if (trxID != null) {
+            builder = builder.addHeader("X-MeSomb-TrxID", trxID)
+        }
         client.newCall(builder.build()).execute().use { response ->
             if (response.code >= 400) {
                 assert(response.body != null)
@@ -149,20 +156,22 @@ class PaymentOperation(
     /**
      * Collect money a user account
      *
-     * @param amount       amount to collect
-     * @param service      MTN, ORANGE, AIRTEL
-     * @param payer        account number to collect from
-     * @param date         date of the request
-     * @param nonce        unique string on each request
-     * @param country      country CM, NE
-     * @param currency     code of the currency of the amount
-     * @param feesIncluded if your want MeSomb to include and compute fees in the amount to collect
-     * @param mode         asynchronous or synchronous
-     * @param conversion   In case of foreign currently defined if you want to rely on MeSomb to convert the amount in the local currency
-     * @param location     Map containing the location of the customer check the documentation
-     * @param customer     Map containing information of the customer check the documentation
-     * @param product      Map containing information of the product check the documentation
-     * @param extra        Extra parameter to send in the body check the API documentation
+     * @param params object with the below information
+     *               - amount: amount to collect
+     *               - service: payment service with the possible values MTN, ORANGE, AIRTEL
+     *               - payer: account number to collect from
+     *               - date: date of the request
+     *               - nonce: unique string on each request
+     *               - country: 2 letters country code of the service (configured during your service registration in MeSomb)
+     *               - currency: currency of your service depending on your country
+     *               - fees: false if your want MeSomb fees to be computed and included in the amount to collect
+     *               - mode: asynchronous or synchronous
+     *               - conversion: true in case of foreign currently defined if you want to rely on MeSomb to convert the amount in the local currency
+     *               - location: Map containing the location of the customer with the following attributes: town, region and location all string.
+     *               - products: It is ArrayList of products. Each product are Map with the following attributes: name string, category string, quantity int and amount float
+     *               - customer: a Map containing information about the customer: phone string, email: string, first_name string, last_name string, address string, town string, region string and country string
+     *               - trxID: if you want to include your transaction ID in the request
+     *               - extra: Map to add some extra attribute depending on the API documentation
      * @return TransactionResponse
      * @throws IOException
      * @throws NoSuchAlgorithmException
@@ -182,40 +191,36 @@ class PaymentOperation(
         InvalidClientRequestException::class
     )
     fun makeCollect(
-        amount: Float,
-        service: String,
-        payer: String,
-        date: Date = Date(),
-        nonce: String?,
-        country: String? = "CM",
-        currency: String? = "XAF",
-        feesIncluded: Boolean = true,
-        mode: String? = "synchronous",
-        conversion: Boolean = false,
-        location: Map<String, String?>? = null,
-        customer: Map<String, String?>? = null,
-        product: Map<String, String?>? = null,
-        extra: Map<String, Any?>? = null
+        params: Map<String, Any?>
     ): TransactionResponse? {
         val endpoint = "payment/collect/"
         val body: MutableMap<String, Any> = HashMap()
-        body["amount"] = amount
-        body["service"] = service
-        body["payer"] = payer
-        body["country"] = country as String
-        body["currency"] = currency as String
-        body["fees"] = feesIncluded
-        body["conversion"] = conversion
-        if (location != null) {
-            body["location"] = location
+
+        val mode: String = params.getOrDefault("mode", "synchronous") as String
+        val date: Date = params.getOrDefault("date", Date()) as Date
+        val nonce: String = params["nonce"] as String
+
+        body["amount"] = params["amount"] as Float
+        body["service"] = params["service"] as String
+        body["payer"] = params["payer"] as String
+        body["country"] = params.getOrDefault("country", "CM") as String
+        body["currency"] = params.getOrDefault("currency", "XAF") as String
+        body["fees"] = params.getOrDefault("fees", true) as Boolean
+        body["conversion"] = params.getOrDefault("conversion", false) as Boolean
+        if (params.getOrDefault("trxID", null) != null) {
+            body["trxID"] = params["trxID"] as String
         }
-        if (customer != null) {
-            body["customer"] = customer
+        if (params.getOrDefault("location", null) != null) {
+            body["location"] = params["location"] as Map<String, String?>
         }
-        if (product != null) {
-            body["product"] = product
+        if (params.getOrDefault("customer", null) != null) {
+            body["customer"] = params["customer"] as Map<String, Any?>
         }
-        if (extra != null) {
+        if (params.getOrDefault("products", null) != null) {
+            body["products"] = params["products"] as ArrayList<Map<String, Any?>>
+        }
+        if (params.containsKey("extra")) {
+            val extra = params["extra"] as Map<String, Any?>
             for (key in extra.keys) {
                 body[key] = extra[key] as String
             }
@@ -227,7 +232,7 @@ class PaymentOperation(
                     "POST",
                     endpoint,
                     date,
-                    nonce!!,
+                    nonce,
                     body,
                     mode
                 )) as JSONObject
@@ -240,14 +245,20 @@ class PaymentOperation(
     /**
      * Method to make deposit in a receiver mobile account.
      *
-     * @param amount the amount of the transaction
-     * @param service service code (MTN, ORANGE, AIRTEL, ...)
-     * @param receiver receiver account (in the local phone number)
-     * @param date date of the request
-     * @param nonce Unique key generated for each transaction
-     * @param country country code, 'CM' by default
-     * @param currency currency of the transaction (XAF, XOF, ...) XAF by default
-     * @param extra extra parameters to send in the body check the API documentation
+     * @param params object with the below information
+     *               - amount: amount to collect
+     *               - service: payment service with the possible values MTN, ORANGE, AIRTEL
+     *               - receiver: account number to depose money
+     *               - date: date of the request
+     *               - nonce: unique string on each request
+     *               - country: 2 letters country code of the service (configured during your service registration in MeSomb)
+     *               - currency: currency of your service depending on your country
+     *               - conversion: true in case of foreign currently defined if you want to rely on MeSomb to convert the amount in the local currency
+     *               - location: Map containing the location of the customer with the following attributes: town, region and location all string.
+     *               - products: It is array of products. Each product are Map with the following attributes: name string, category string, quantity int and amount float
+     *               - customer: a Map containing information about the customer: phone string, email: string, first_name string, last_name string, address string, town string, region string and country string
+     *               - trxID: if you want to include your transaction ID in the request
+     *               - extra: Map to add some extra attribute depending on the API documentation
      * @return TransactionResponse
      * @throws IOException
      * @throws NoSuchAlgorithmException
@@ -267,23 +278,33 @@ class PaymentOperation(
         InvalidClientRequestException::class
     )
     fun makeDeposit(
-        amount: Float,
-        service: String,
-        receiver: String,
-        date: Date? = Date(),
-        nonce: String?,
-        country: String? = "CM",
-        currency: String? = "XAF",
-        extra: Map<String, Any>? = null
+        params: Map<String, Any?>
     ): TransactionResponse? {
         val endpoint = "payment/deposit/"
         val body: MutableMap<String, Any> = HashMap()
-        body["amount"] = amount
-        body["service"] = service
-        body["receiver"] = receiver
-        body["country"] = country as String
-        body["currency"] = currency as String
-        if (extra != null) {
+
+        val date: Date = params.getOrDefault("date", Date()) as Date
+        val nonce: String = params["nonce"] as String
+
+        body["amount"] = params["amount"] as Float
+        body["service"] = params["service"] as String
+        body["receiver"] = params["receiver"] as String
+        body["country"] = params.getOrDefault("country", "CM") as String
+        body["currency"] = params.getOrDefault("currency", "XAF") as String
+        if (params.getOrDefault("trxID", null) != null) {
+            body["trxID"] = params["trxID"] as String
+        }
+        if (params.getOrDefault("location", null) != null) {
+            body["location"] = params["location"] as Map<String, String?>
+        }
+        if (params.getOrDefault("customer", null) != null) {
+            body["customer"] = params["customer"] as Map<String, Any?>
+        }
+        if (params.getOrDefault("products", null) != null) {
+            body["products"] = params["products"] as Array<Map<String, Any?>>
+        }
+        if (params.containsKey("extra")) {
+            val extra = params["extra"] as Map<String, Any?>
             for (key in extra.keys) {
                 body[key] = extra[key] as String
             }
@@ -295,8 +316,8 @@ class PaymentOperation(
                     this.executeRequest(
                         "POST",
                         endpoint,
-                        date!!,
-                        nonce!!,
+                        date,
+                        nonce,
                         body
                     )
                 ) as JSONObject
@@ -373,11 +394,11 @@ class PaymentOperation(
         PermissionDeniedException::class,
         InvalidClientRequestException::class
     )
-    fun getStatus(date: Date? = Date()): Application? {
+    fun getStatus(): Application? {
         val endpoint = "payment/status/"
         val parser = JSONParser()
         return try {
-            Application(parser.parse(date?.let { this.executeRequest("GET", endpoint, it) }) as JSONObject)
+            Application(parser.parse(this.executeRequest("GET", endpoint, Date())) as JSONObject)
         } catch (e: ParseException) {
             throw ServerException("Issue to parse transaction response", "parsing-issue")
         }
@@ -406,11 +427,11 @@ class PaymentOperation(
         PermissionDeniedException::class,
         InvalidClientRequestException::class
     )
-    fun getTransactions(ids: Array<String>, date: Date? = Date()): JSONArray? {
-        val endpoint = "payment/transactions/?ids=" + java.lang.String.join(",", *ids)
+    fun getTransactions(ids: Array<String>, source: String? = "MESOMB"): JSONArray? {
+        val endpoint = "payment/transactions/?ids=" + java.lang.String.join(",", *ids) + "&source=$source"
         val parser = JSONParser()
         return try {
-            parser.parse(date?.let { this.executeRequest("GET", endpoint, it) }) as JSONArray
+            parser.parse(this.executeRequest("GET", endpoint, Date())) as JSONArray
         } catch (e: ParseException) {
             throw ServerException("Issue to parse transaction response", "parsing-issue")
         }
@@ -438,11 +459,11 @@ class PaymentOperation(
         PermissionDeniedException::class,
         InvalidClientRequestException::class
     )
-    fun checkTransactions(ids: Array<String>, date: Date? = Date()): JSONArray? {
-        val endpoint = "payment/transactions/check/?ids=" + java.lang.String.join(",", *ids)
+    fun checkTransactions(ids: Array<String>, source: String? = "MESOMB"): JSONArray? {
+        val endpoint = "payment/transactions/check/?ids=" + java.lang.String.join(",", *ids) + "&source=$source"
         val parser = JSONParser()
         return try {
-            parser.parse(date?.let { this.executeRequest("GET", endpoint, it) }) as JSONArray
+            parser.parse(this.executeRequest("GET", endpoint, Date())) as JSONArray
         } catch (e: ParseException) {
             throw ServerException("Issue to parse transaction response", "parsing-issue")
         }
