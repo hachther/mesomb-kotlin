@@ -38,7 +38,7 @@ allprojects {
 
 ```Gradle
 dependencies {
-    implementation 'com.github.hachther:mesomb-kotlin:TAG'
+    implementation 'com.github.hachther:mesomb-kotlin:2.0.0'
 }
 ```
 
@@ -62,7 +62,7 @@ Add it in your root build.gradle at the end of repositories:
 <dependency>
     <groupId>com.github.hachther</groupId>
     <artifactId>mesomb-kotlin</artifactId>
-    <version>Tag</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
