@@ -1,23 +1,11 @@
 package com.hachther.mesomb.models
 
-import org.json.simple.JSONObject
+import org.json.JSONObject
 
 class Product(obj: JSONObject) {
-    val name: String
-    var category: String? = null
-    var quantity: Int? = null
-    var amount: Float? = null
-
-    init {
-        name = obj["name"] as String
-        if (obj.getOrDefault("category", null) != null) {
-            category = obj["category"].toString()
-        }
-        if (obj.getOrDefault("quantity", null) != null) {
-            quantity = obj["quantity"] as Int
-        }
-        if (obj.getOrDefault("email", null) != null) {
-            amount = obj["amount"] as Float
-        }
-    }
+    val id: String = obj.getString("id")
+    val name: String = obj.getString("name")
+    var category: String? = obj.optString("category", null)
+    var quantity: Int? = if (obj.has("quantity")) obj.getInt("quantity") else null
+    var amount: Double? = if (obj.has("double")) obj.getDouble("amount") else null
 }

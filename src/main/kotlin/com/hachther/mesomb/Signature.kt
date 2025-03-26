@@ -1,7 +1,6 @@
 package com.hachther.mesomb
 
-import okio.ByteString.Companion.encode
-import org.json.simple.JSONObject
+import org.json.JSONObject
 import java.io.UnsupportedEncodingException
 import java.net.MalformedURLException
 import java.net.URL
@@ -77,7 +76,7 @@ object Signature {
             i++
         }
         val canonicalHeaders = java.lang.String.join("\n", *headersTokens)
-        val payloadHash = sha1(if (body != null) JSONObject.toJSONString(body).replace("\\/", "/") else "{}")
+        val payloadHash = sha1(if (body != null) JSONObject(body).toString().replace("\\/", "/") else "{}")
         val signedHeaders = java.lang.String.join(";", *headersKeys)
         val path: String
         path = try {

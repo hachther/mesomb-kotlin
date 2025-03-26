@@ -1,30 +1,21 @@
 package com.hachther.mesomb.models
 
-import org.json.simple.JSONObject
+import org.json.JSONObject
 
 
 class TransactionResponse(obj: JSONObject) {
-    val success: Boolean;
-    val message: String?
-    val redirect: String?
-    val transaction: Transaction?
-    val reference: String?
-    val status: String
-
-    init {
-        success = obj["success"] as Boolean
-        message = obj["message"] as String?
-        redirect = obj["redirect"] as String?
-        transaction = Transaction(obj["transaction"] as JSONObject);
-        reference = obj["reference"] as String?
-        status = obj["status"] as String
-    }
+    val success: Boolean = obj.getBoolean("success")
+    val message: String? = if (obj.has("message")) obj.getString("message") else null
+    val redirect: String? = if (obj.has("redirect")) obj.getString("redirect") else null
+    val transaction: Transaction = Transaction(obj.getJSONObject("transaction"))
+    val reference: String? = if (obj.has("reference")) obj.getString("reference") else null
+    val status: String = obj.getString("status")
 
     fun isOperationSuccess(): Boolean {
         return success
     }
 
-    fun isTransactionSuccess(): Boolean {
-        return success && status == "SUCCESS"
+    fun isTransactionSuccess() : Boolean {
+        return transaction.isSuccessful()
     }
 }

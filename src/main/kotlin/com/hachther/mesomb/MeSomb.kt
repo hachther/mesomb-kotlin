@@ -18,7 +18,7 @@ object MeSomb {
 
     /** The version of the MeSomb API to use for requests.  */
     var apiVersion = "v1.1"
-    var version = "1.0.2"
+    var version = "2.0.0"
 
     /** The application's information (name, version, URL)  */
     var appInfo: String? = null

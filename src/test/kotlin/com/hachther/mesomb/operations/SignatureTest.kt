@@ -1,11 +1,10 @@
 package com.hachther.mesomb.operations;
 
 import com.hachther.mesomb.Signature
-import com.hachther.mesomb.util.RandomGenerator
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class SignatureTest {
     val credentials: MutableMap<String, String?> = mutableMapOf(
@@ -15,7 +14,7 @@ class SignatureTest {
     @Test
     fun testSignatureWithGet() {
         val url: String = "http://127.0.0.1:8000/en/api/v1.1/payment/collect/"
-        Assertions.assertEquals(Signature.signRequest("payment", "GET", url, Date(1673827200000), "fihser", credentials), "HMAC-SHA1 Credential=c6c40b76-8119-4e93-81bf-bfb55417b392/20230116/payment/mesomb_request, SignedHeaders=host;x-mesomb-date;x-mesomb-nonce, Signature=92866ff78427c739c1d48c9223a6133cde46ab5d")
+        assertEquals(Signature.signRequest("payment", "GET", url, Date(1673827200000), "fihser", credentials), "HMAC-SHA1 Credential=c6c40b76-8119-4e93-81bf-bfb55417b392/20230116/payment/mesomb_request, SignedHeaders=host;x-mesomb-date;x-mesomb-nonce, Signature=92866ff78427c739c1d48c9223a6133cde46ab5d")
     }
     @Test
     fun testSignatureWithPost() {
@@ -45,6 +44,6 @@ class SignatureTest {
         )
         val headers = TreeMap<String, String>()
         headers["content-type"] = "application/json; charset=utf-8"
-        Assertions.assertEquals(Signature.signRequest("payment", "POST", url, Date(1673827200000), "fihser", credentials, headers, body), "HMAC-SHA1 Credential=c6c40b76-8119-4e93-81bf-bfb55417b392/20230116/payment/mesomb_request, SignedHeaders=content-type;host;x-mesomb-date;x-mesomb-nonce, Signature=b5cd63f10e352b3184dc39f8665dba684efd170e")
+        assertEquals(Signature.signRequest("payment", "POST", url, Date(1673827200000), "fihser", credentials, headers, body), "HMAC-SHA1 Credential=c6c40b76-8119-4e93-81bf-bfb55417b392/20230116/payment/mesomb_request, SignedHeaders=content-type;host;x-mesomb-date;x-mesomb-nonce, Signature=b5cd63f10e352b3184dc39f8665dba684efd170e")
     }
 }

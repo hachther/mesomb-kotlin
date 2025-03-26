@@ -1,41 +1,14 @@
 package com.hachther.mesomb.models
 
-import org.json.simple.JSONObject
+import org.json.JSONObject
 
 class Customer(obj: JSONObject) {
-    var email: String? = null
-    var phone: String? = null
-    var town: String? = null
-    var region: String? = null
-    var country: String? = null
-    var first_name: String? = null
-    var last_name: String? = null
-    var address: String? = null
-
-    init {
-        if (obj.getOrDefault("email", null) != null) {
-            email = obj["email"].toString()
-        }
-        if (obj.getOrDefault("phone", null) != null) {
-            phone = obj["phone"].toString()
-        }
-        if (obj.getOrDefault("town", null) != null) {
-            town = obj["town"].toString()
-        }
-        if (obj.getOrDefault("region", null) != null) {
-            region = obj["region"].toString()
-        }
-        if (obj.getOrDefault("country", null) != null) {
-            country = obj["country"].toString()
-        }
-        if (obj.getOrDefault("first_name", null) != null) {
-            first_name = obj["first_name"].toString()
-        }
-        if (obj.getOrDefault("last_name", null) != null) {
-            last_name = obj["last_name"].toString()
-        }
-        if (obj.getOrDefault("address", null) != null) {
-            address = obj["address"].toString()
-        }
-    }
+    var email: String? = obj.optString("email", null)
+    var phone: String? = obj.optString("phone", null)
+    var town: String? = obj.optString("town", null)
+    var region: String? = obj.optString("region", null)
+    var country: String? = obj.optString("country", null)
+    var firstName: String? = obj.optString("first_name", null)
+    var lastName: String? = obj.optString("last_name", null)
+    var address: String? = obj.optString("address", null)
 }
